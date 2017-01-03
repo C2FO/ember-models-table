@@ -211,11 +211,17 @@ export default ModelsTable.extend({
     }
 
     // Add global filter
-    let globalFilter = get(this, 'filterQueryParameters.globalFilter');
+    const filterParam = get(this, 'filterQueryParameters.globalFilter');
+    let searchableItems = this.get('visibleProcessedColumns') || [];
+    if (this.get('doFilteringByHiddenColumns')) {
+      searchableItems = this.get('columns') || [];
+    }
     if (filterString) {
-      query[globalFilter] = filterString;
+      query[filterParam] = filterString;
+      query[filterParam+'Keys'] = searchableItems.map(col=>{ return col.propertyName });
     } else {
-      delete query[globalFilter];
+      delete query[filterParam];
+      delete query[filterParam+'Keys'];
     }
 
     // Add per-column filter
