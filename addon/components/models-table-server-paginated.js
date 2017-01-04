@@ -134,6 +134,48 @@ export default ModelsTable.extend({
     return Math.min(pageMax, itemsCount);
   }),
 
+  _buildColumnMap() {
+    const attrs = this.get('data.type.attributes');
+    let columnMap = {};
+
+    if (Ember.typeOf(attrs) !== 'undefined') {
+      attrs.forEach(attr => {
+        columnMap[attr.name] = this._buildColumn(attr);
+      });
+    }
+
+    return columnMap;
+  },
+
+  /**
+   * Builds a column configuration from a model's attributes.
+   * Used to create configurations for ```this.defaultColumns``` and overrides the default method
+   * to enable configuration of a model-table's propertyName through model.attr options.
+   *
+   * @param modelAttr
+   * @returns {{propertyName}}
+   * @private
+   */
+  _buildColumn(modelAttr) {
+    const data = this.get('data');
+    const options = Ember.get(modelAttr, 'options');
+    let colOptions = {
+      propertyName: modelAttr.name
+    };
+
+    if (data.get(`query.${modelAttr.name}`)) {
+      colOptions.filterString = data.get(`query.${modelAttr.name}`);
+    }
+
+    if (modelAttr && options) {
+      if (options.cellTemplate) {
+        colOptions.template = cellTemplate;
+      }
+    }
+
+    return colOptions;
+  },
+
   /**
    * This function actually loads the data from the server.
    * It takes the store, modelName and query from the passed in data-object and adds page, sorting & filtering to it.
@@ -169,11 +211,17 @@ export default ModelsTable.extend({
     }
 
     // Add global filter
-    let globalFilter = get(this, 'filterQueryParameters.globalFilter');
+    const filterParam = get(this, 'filterQueryParameters.globalFilter');
+    let searchableItems = this.get('visibleProcessedColumns') || [];
+    if (this.get('doFilteringByHiddenColumns')) {
+      searchableItems = this.get('columns') || [];
+    }
     if (filterString) {
-      query[globalFilter] = filterString;
+      query[filterParam] = filterString;
+      query[filterParam+'Keys'] = searchableItems.map(col=>{ return col.propertyName });
     } else {
-      delete query[globalFilter];
+      delete query[filterParam];
+      delete query[filterParam+'Keys'];
     }
 
     // Add per-column filter
