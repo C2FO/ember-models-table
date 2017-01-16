@@ -342,6 +342,8 @@ export default Component.extend({
             let d = Ember.copy(columnMap[col.propertyName]);
             columns.push(Ember.merge(d, col));
             usedNames.push(col.propertyName);
+          } else if (!col.propertyName) {
+            columns.push(col);
           } else {
             Ember.warn(`No propertyName found for ${col.propertyName}`, false, {id: 'data-table.columns-builder'});
           }
@@ -585,7 +587,7 @@ export default Component.extend({
    * @private
    * @name ModelsTable#_selectedItems
    */
-  _selectedItems: null,
+  _selectedItems: A([]),
 
   /**
    * @type {boolean}
@@ -982,7 +984,6 @@ export default Component.extend({
    * @name ModelsTable#setup
    */
   setup: on('init', function() {
-    this._setupSelectedRows();
     this._setupExpandedRows();
     this._setupColumns();
     this._setupMessages();
@@ -1020,10 +1021,6 @@ export default Component.extend({
 
   _setupExpandedRows() {
     set(this, '_expandedRowIndexes', A([]));
-  },
-
-  _setupSelectedRows() {
-    set(this, '_selectedItems', A([]));
   },
 
   /**
